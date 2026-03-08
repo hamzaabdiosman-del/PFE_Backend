@@ -6,10 +6,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-# postpone table creation until the app is starting so that the
-# database has a chance to be reachable. In production you may manage
-# migrations with Alembic instead of create_all.
-
 app = FastAPI()
 
 # enable CORS so React/Vite frontend on localhost can call these APIs
