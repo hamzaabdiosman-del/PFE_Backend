@@ -26,6 +26,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     # this will create sqlite file or contact the configured DB
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
@@ -100,6 +101,27 @@ class ServiceSchema(ServiceBase):
 
     class Config:
         from_attributes = True
+
+class LoginRequest(BaseModel):
+    email: str
+    mot_de_passe: str
+
+# Routes for Authentication
+@app.get("/login/{email}")
+def login_get(email: str, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.email == email).first()
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return {"id": client.id, "nom": client.nom, "email": client.email}
+
+@app.post("/login/")
+def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.email == credentials.email).first()
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+    if client.mot_de_passe != credentials.mot_de_passe:
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    return {"id": client.id, "nom": client.nom, "email": client.email}
 
 # Routes for Clients
 @app.post("/clients/", response_model=ClientSchema)
